@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TodoResource;
 use App\Models\TodoList;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,22 +11,27 @@ use Illuminate\Http\Response;
 class TodoListController extends Controller
 {
     public function index(){
-        $lists = TodoList::all();
-        return response($lists);
+        $lists = TodoList::whereUserId(auth()->id())->get();
+        return TodoResource::collection($lists);
+        // return response($lists);
     }
 
     public function show(TodoList $todo_list){
+        return TodoResource::make($todo_list);
  
-        return response($todo_list);
+        // return response($todo_list);
     }
 
 
     public function store(Request $request){
 
        $request->validate(['name' => ['required']]);
+
+       $request['user_id'] = auth()->id();
        $todo_list =  TodoList::create($request->all());
  
         return $todo_list;
+
     }
 
 

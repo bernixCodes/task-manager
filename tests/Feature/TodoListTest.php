@@ -4,19 +4,21 @@ use App\Models\TodoList;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
-use Tests\TestCase;
 
-use function Pest\Laravel\json;
 
 uses(RefreshDatabase::class);
 
 
 test('get_all_todo_list', function () {
 
-    TodoList::factory()->create();
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
+    TodoList::factory()->create(['user_id' => $user->id]);
 
     $response = $this->getJson(route('todo-list.index'));
 
+    $response->assertStatus(200);
     $response->assertJsonCount(1);
 });
 
@@ -24,6 +26,9 @@ test('get_all_todo_list', function () {
 test('get_single_todo_list', function () {
     $this->withoutExceptionHandling();
     
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
     $list = TodoList::factory()->create();
   
 
@@ -35,7 +40,10 @@ test('get_single_todo_list', function () {
 test('store_new_todo_list', function () {
     $this->withoutExceptionHandling();
 
-    $list = TodoList::factory()->make();
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
+    $list = TodoList::factory()->make(['user_id' => $user->id]);
 
     $response = $this->postJson(route('todo-list.store'), ['name' => $list->name])
     ->assertCreated()->json();
@@ -47,6 +55,9 @@ test('store_new_todo_list', function () {
 
 test('test_while_storing_todo_list_name_field_is_required', function () {
 
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
     $this->postJson(route('todo-list.store'))
      ->assertUnprocessable()
 
@@ -56,6 +67,9 @@ test('test_while_storing_todo_list_name_field_is_required', function () {
 
 
 test('delete_todo_list', function () {
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
     $list = TodoList::factory()->create();
 
     $this->deleteJson(route('todo-list.destroy', $list->id))
@@ -66,6 +80,10 @@ test('delete_todo_list', function () {
 
 
 test('update_todo_list', function () {
+
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
     $list = TodoList::factory()->create();
 
     $this->patchJson(route('todo-list.update', $list->id), ['name' => 'updated name'])
@@ -76,7 +94,11 @@ test('update_todo_list', function () {
 
 
 test('test_while_updating_todo_list_name_field_is_required', function () {
-    $list = TodoList::factory()->create();
+
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
+    $list = TodoList::factory()->create(['user_id' => $user->id]);
 
     $this->patchJson(route('todo-list.update', $list->id))
      ->assertUnprocessable()
